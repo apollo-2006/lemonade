@@ -26,7 +26,7 @@ A release admin decides whether to promote a candidate to the stable channel by 
 - Ubuntu: `stable` channel of the PPA and Snap.
 - Docker: `latest` tag on this GitHub.
 
-Releases are also available for other platforms, such as Arch, but their availability is determined by the maintainers of those platforms. 
+Releases are also available for other platforms, such as Arch, but their availability is determined by the maintainers of those platforms.
 
 ## Versioning
 
