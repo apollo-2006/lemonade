@@ -42,7 +42,15 @@ A source tree may contain a `.version` file to override the calculated version. 
 
 ### 1. Create and Publish the First Candidate
 
-At 19:00 UTC every Wednesday, automation creates `release-v<year>.<week>` from the tip of `main`, where the year and week identify the following week's release. The initial branch build is candidate `.0`.
+At 19:00 UTC every Wednesday, a release admin runs `tools/branch.py` to create `release-v<year>.<week>` from the tip of `main`, where the year and week identify the following week's release. The script computes the branch name with the same logic that versions builds, confirms, and pushes the branch. The initial branch build is candidate `.0`.
+
+```bash
+# Cut this week's release branch from origin/main
+python tools/branch.py
+
+# Preview the branch name and commit without pushing
+python tools/branch.py --dry-run
+```
 
 Every push to a `release-v*` branch produces the next candidate and publishes it to the candidate/prerelease channels. Creating the branch also causes repo-manager to create three GitHub issues:
 
@@ -66,11 +74,11 @@ When testing finds a problem, choose one of these outcomes:
 
 Pushing a hotfix or revert to the release branch automatically publishes a new candidate with an incremented `number`. If an automated cherry-pick conflicts, stop and resolve the situation through the normal reviewed development process; do not introduce release-only code.
 
-Workflow-dispatch tools are available to perform the common branch operations:
+The common branch operations are done with plain git by a release admin:
 
-- **Cherry-pick to release branch:** cherry-picks one or more fixes from `main` into the current release branch.
-- **Release hotfix:** cherry-picks one or more commits into an older `release-v*` branch, causing a new candidate to be published before it is considered for stable.
-- **Revert commit:** reverts one or more commits from both `main` and the current release branch.
+- **Cherry-pick to release branch:** cherry-pick one or more fixes from `main` into the current release branch and push.
+- **Release hotfix:** cherry-pick one or more commits into an older `release-v*` branch; the push publishes a new candidate before it is considered for stable.
+- **Revert commit:** revert one or more commits from both `main` and the current release branch.
 
 When testing exposes a missing automated test, file an issue or RFC to add that coverage so the same class of regression is caught in CI.
 
