@@ -123,7 +123,7 @@ The [cpp_server_build_test_release.yml workflow](https://github.com/lemonade-sdk
 
 Lemonade .msi artifacts are signed by SignPath.io under their SignPath Foundation program. Thank you SignPath!
 
-Every release must be manually approved on SignPath. After the Windows installer is built by the release action, a job called Sign MSI Installers with SignPath will start.
+Every stable release must be manually approved on SignPath. Candidates are not signed, and their prerelease notes say so. After the Windows installer is built by the release action for a tag, a job called Sign MSI Installers with SignPath will start.
 
 Example from v10.7.0: https://github.com/lemonade-sdk/lemonade/actions/runs/27283434473/job/80587971984
 
