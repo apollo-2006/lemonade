@@ -42,15 +42,7 @@ A source tree may contain a `.version` file to override the calculated version. 
 
 ### 1. Create and Publish the First Candidate
 
-At 19:00 UTC every Wednesday, a release admin runs `tools/branch.py` to create `release-v<year>.<week>` from the tip of `main`, where the year and week identify the following week's release. The script computes the branch name with the same logic that versions builds, confirms, and pushes the branch. The initial branch build is candidate `.0`.
-
-```bash
-# Cut this week's release branch from origin/main
-python tools/branch.py
-
-# Preview the branch name and commit without pushing
-python tools/branch.py --dry-run
-```
+At 19:00 UTC every Wednesday, the `create-release-branch.yml` workflow pushes the tip of `main` to `release-v<year>.<week>`, where the year and week identify the following week's release. The name comes from `tools/version.py --release-branch`, so it agrees with the version stamped on builds. If the scheduled run fails, a release admin can start it again from the Actions tab with "Run workflow". The initial branch build is candidate `.0`.
 
 Every push to a `release-v*` branch produces the next candidate and publishes it to the candidate/prerelease channels. Creating the branch also causes repo-manager to create three GitHub issues:
 
