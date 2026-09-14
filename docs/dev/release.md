@@ -10,11 +10,23 @@ The repo-manager workflow runs automatically on every push to `main` or a releas
 
 ## Release Cadence and Channels
 
-Lemonade operates on a weekly release cadence. A release candidate is branched from `main` every Wednesday at 19:00 UTC and tested by the community for the following week. A release admin decides whether to promote a tested candidate to the stable channels.
+Lemonade has 3 release channels:
 
-Release candidates are published for Ubuntu, Windows, Docker, macOS, Fedora, and Debian. The PPA and Snap use the `candidate` channel, and GitHub marks the release as a prerelease. Builds from `main` continue to go to the `bleeding-edge` channels. Stable releases use the `stable` PPA and Snap channels and the `latest` GitHub and Docker channels.
+- `stable`: released once per week, after receiving 1 week of community testing.
+- `candidate`: branched from `main` once per week, tested by the community and updated with hotfixes.
+- `bleeding-edge`: releases on every commit to `main`.
 
-Any PR intended for the next release should be merged before the Wednesday cutoff. A commit merged after 19:00 UTC belongs to the following release cycle. Maintainers may postpone merging a PR to protect release quality.
+The release branch is made automatically by a cron job each Wednesday at 19:00 UTC. Creating or updating this branch triggers the following artifacts to automatically release:
+- Windows, macOS, Fedora, and Debian: on the `prerelease` channel of this GitHub.
+- Ubuntu: `candidate` channel of the PPA and Snap.
+- Docker: `candidate` tag on this GitHub.
+
+A release admin decides whether to promote a candidate to the stable channel by tagging it. Stable releases produce the following artifacts:
+- Windows, macOS, Fedora, and Debian: on the `latest` channel of this GitHub.
+- Ubuntu: `stable` channel of the PPA and Snap.
+- Docker: `latest` tag on this GitHub.
+
+Releases are also available for other platforms, such as Arch, but their availability is determined by the maintainers of those platforms. 
 
 ## Versioning
 
@@ -26,7 +38,7 @@ Lemonade versions have the deterministic format `year.week.number`:
 
 Release branches omit the final component and are named `release-v<year>.<week>`. For example, a branch created on Wednesday, September 9, 2026 for the following week's release is named `release-v2026.38`. Its first candidate is `v2026.38.0`; one fix on the release branch produces `v2026.38.1`. If `v2026.38.1` is promoted to stable and later needs a hotfix, the next artifact is `v2026.38.2`.
 
-Windows MSI versions use a two-digit year because MSI version fields do not support the four-digit value. For example, Lemonade `2026.38.1` has MSI version `26.38.1`.
+> Note: Windows MSI versions use a two-digit year because MSI version fields do not support the four-digit value. For example, Lemonade `2026.38.1` has MSI version `26.38.1`.
 
 The version is calculated at build time rather than stored in `CMakeLists.txt`. Non-candidate builds, including source builds, PR checks, and `bleeding-edge` artifacts, use:
 
@@ -34,7 +46,7 @@ The version is calculated at build time rather than stored in `CMakeLists.txt`. 
 year.week.0~<commit-count>.<short-hash>
 ```
 
-The week is the release week the commit would enter. Before the Wednesday 19:00 UTC cutoff, this is the following week; after the cutoff, it is the week after that. For example, a build from `main` on September 10, 2026 could be `2026.39.0~1595.ff22950d`.
+The week is the release week the commit would enter. Before the Wednesday 19:00 UTC cutoff, this is the following week; after the cutoff, it is the week after that. For example, a build from `main` on Thursday, September 10, 2026 could be `2026.39.0~1595.ff22950d`.
 
 A source tree may contain a `.version` file to override the calculated version. Release source archives include this file so unpacked source retains the version of the artifact from which it came.
 
@@ -54,7 +66,7 @@ Repo-manager re-syncs the issues after every push to the release branch. Comment
 
 ### 2. Test the Candidate
 
-The release admin moderates the `#release-candidate` Discord channel, announces each candidate, and uses the repo-manager checklist to tell volunteers what needs testing. The admin also monitors issues with the `release-candidate` label and triages them against the project's supported use cases and quality standards.
+The release admin moderates the `#release-candidate` Discord channel, announces each candidate, and uses the repo-manager checklist to tell volunteers what needs testing. The admin also monitors issues with the `candidate` label and triages them against the project's supported use cases and quality standards.
 
 At minimum, each platform needs someone to install or upgrade to the candidate and exercise it. Testing normal production workloads is encouraged. Candidate testers should back up their configuration and models before installing a candidate, especially when a release includes a schema migration or another breaking change.
 
@@ -64,22 +76,14 @@ When testing finds a problem, choose one of these outcomes:
 2. **Hotfix:** Merge a minimal fix into `main`, then cherry-pick that commit into the release branch. Never develop a fix only on the release branch.
 3. **Revert:** If a blocking problem would be too complex to fix safely during the release cycle, revert the responsible commit or commits from both `main` and the release branch. The change must return to PR review before it can land again.
 
-Pushing a hotfix or revert to the release branch automatically publishes a new candidate with an incremented `number`. If an automated cherry-pick conflicts, stop and resolve the situation through the normal reviewed development process; do not introduce release-only code.
-
-The common branch operations are done with plain git by a release admin:
-
-- **Cherry-pick to release branch:** cherry-pick one or more fixes from `main` into the current release branch and push.
-- **Release hotfix:** cherry-pick one or more commits into an older `release-v*` branch; the push publishes a new candidate before it is considered for stable.
-- **Revert commit:** revert one or more commits from both `main` and the current release branch.
-
-When testing exposes a missing automated test, file an issue or RFC to add that coverage so the same class of regression is caught in CI.
+> Tip: When testing exposes a missing automated test, file an issue or RFC to add that coverage so the same class of regression is caught in CI.
 
 ### 3. Decide Whether to Release
 
 Stable publication is always a human decision. Before tagging a candidate:
 
 - Check the **`Release v<year>.<week> final checklist`** issue. Resolve all P1 items and confirm that its verdict is `Ready`.
-- Review the candidate feedback and all open issues carrying the `release-candidate` label.
+- Review the candidate feedback and all open issues carrying the `candidate` label.
 - Review and edit the release-notes issue as described below.
 
 If blocking issues remain at 19:00 UTC on Friday, skip that week's stable release by leaving the release branch untagged. Hold a postmortem to decide whether the review, testing, or release policy needs adjustment. Candidate artifacts keep their existing versions; version numbers are never reused.
@@ -100,7 +104,7 @@ Use a bulleted list with one item per breaking change. Keep it concise and link 
 
 ### 5. Promote a Candidate to Stable
 
-Tag the exact commit that produced the tested candidate. The tag must be `v<year>.<week>.<number>` and must match that candidate's build version. Pushing the tag is the human gate that starts stable publication; do not create release tags for candidates that should remain only in the candidate/prerelease channels.
+Tag the exact commit that produced the tested candidate. The tag must be `v<year>.<week>.<number>` and must match that candidate's build version.
 
 Use `tools/release.py` to do this deterministically. It fetches the release branches, selects the newest `release-v*` branch, computes the version from that branch's tip with the same logic as the build (`tools/version.py`), and — after you confirm — creates a signed tag on that exact commit and pushes it. It refuses to proceed if the computed tag already exists or if the branch advanced between selection and push, which prevents accidentally tagging the wrong `number`.
 
@@ -148,7 +152,7 @@ DO NOT add or replace release artifacts, as this would break the chain of custod
 
 ### 8. Post the Discord Announcement
 
-Open the **`v<year>.<week> announcement`** GitHub issue. Repo-manager has drafted a full announcement with per-feature sections and contributor shoutouts. Review it, make any edits, and post it in `#announcements` on the Lemonade Discord.
+Open the **`v<year>.<week> announcement`** GitHub issue. Repo-manager has drafted a full announcement with per-feature sections and contributor shoutouts. Please rewrite this in your own words instead of posting the AI prose. Post it in `#announcements` on the Lemonade Discord.
 
 Use `@everyone` for the regular weekly release and `@release` for a hotfix.
 
